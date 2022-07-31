@@ -12,7 +12,7 @@ package sumofperfectsquares
 
 import (
 	"fmt"
-	"strconv"
+	"math"
 )
 
 type keyPairValue struct {
@@ -26,8 +26,12 @@ type solution struct {
 }
 
 func SumOfSquares(n uint64) uint64 {
+	if isDirectSquareNumber(n) {
+		return 1;
+	}
+
 	// Declare an array and store all the possible squares which fit into n.
-	var squareValuesWhichFit []keyPairValue; 
+	var squareValuesWhichFit []keyPairValue;
 
 	// This contains all the solution for the given lengths.
 	var answers []solution;
@@ -40,7 +44,7 @@ func SumOfSquares(n uint64) uint64 {
 				key: index,
 				value: indexSquared,
 			}
-			fmt.Println("Possible value: [" + strconv.Itoa(int(possibleValue.key)) + ", " +  strconv.Itoa(int(possibleValue.value)) + "]");
+			// fmt.Println("Possible value: [" + strconv.Itoa(int(possibleValue.key)) + ", " +  strconv.Itoa(int(possibleValue.value)) + "]");
 
 			squareValuesWhichFit = append(squareValuesWhichFit, possibleValue);
 			index++;
@@ -53,14 +57,16 @@ func SumOfSquares(n uint64) uint64 {
 
 	// Based on length of squareValuesWhichFit, we find the minimun per length and then reduce
 	var length = len(squareValuesWhichFit) - 1;
-	for i := length; i > 0; i-- {		
+	for i := length; i > 0; i-- {
+		fmt.Println(i);
+
 		var possibleValues []uint64;
 		for j := 0; j <= i; j++ {
 			possibleValues = append(possibleValues, squareValuesWhichFit[j].value);
 		}
 		
 		// Length solution is an array of squares.
-		var lengthSolution = findSolution(n, possibleValues);
+		var lengthSolution = findSolution(n, possibleValues, answers);
 		// Grouped values for the value.
 		lengthAnswer := solution {
 			length: uint64(i),
@@ -70,9 +76,62 @@ func SumOfSquares(n uint64) uint64 {
 		answers = append(answers, lengthAnswer);
 	}
 
-	
+	return findShortestAnswer(answers);
+}
+
+func isDirectSquareNumber(n uint64) bool {
+	p := math.Sqrt(float64(n));
+	return  p == float64(int(p));
+}
+
+func findSolution(n uint64, valuesToPlayWith []uint64, answers []solution) []uint64 {
+	// Add some optimisation here.
+	if n == 0 {
+		return []uint64{};
+	}
+
+	solution := []uint64{};
+	lengthOfValuesToPlayWith := len(valuesToPlayWith);
+	for i := lengthOfValuesToPlayWith - 1; i >= 0; i-- {
+		var element uint64 = valuesToPlayWith[i];
+		if n >= element {
+			solution = append(solution, element);
+			newValue := n - element;
+			// Idea: here if we have 661878529 and then left with 37174 all the square inbetween are useless.
+			// 1. Based on the new value we want to exclude of the values in the possible slice which are greater.
+			// 2. This should dramatically reduce the length of the slice passed down into the recursive func's.
+			
+			highArrayIndex := findPossibleValueIndex(newValue, valuesToPlayWith);
+			newValuesToPlayWith := valuesToPlayWith[0 : highArrayIndex];
+			result := findSolution(newValue, newValuesToPlayWith, answers);
+			solution = append(solution, result...);
+
+			// 3. Use the answers collection that we are building up, this can allow us to discard answers quickly.
+			// currentShortestAnswer := findShortestAnswer(answers);
+			// if uint64(len(solution)) >= currentShortestAnswer {
+			// 	// discard.
+			// 	return solution;
+			// }
+
+			return solution;
+		}
+	}
+
+	return solution;
+}
+
+func findPossibleValueIndex(newValue uint64, valuesToPlayWith []uint64) int {
+	for i, value := range valuesToPlayWith {
+		if value >= newValue {
+			return i;
+		}
+	}
+
+	return len(valuesToPlayWith);
+}
+
+func findShortestAnswer(answers []solution) uint64 {
 	// Find the element with the smallest length in answers.
-	fmt.Println(answers);
 	answer := 0;
 	for i, a := range answers {
 		l := len(a.perfectSquares);
@@ -83,24 +142,4 @@ func SumOfSquares(n uint64) uint64 {
 		}
 	}
 	return uint64(answer);
-}
-
-func findSolution(n uint64, valuesToPlayWith []uint64) []uint64 {
-	// Add some optimisation here.
-	if n == 0 {
-		return []uint64{};
-	}
-
-	solution := []uint64{};
-	for i := len(valuesToPlayWith) - 1; i >= 0; i-- {
-		var element uint64 = valuesToPlayWith[i];
-		if n >= element {
-			solution = append(solution, element);
-			newValue := n - element;
-			result := findSolution(newValue, valuesToPlayWith);
-			return append(solution, result...);
-		}
-	}
-
-	return solution;
 }
