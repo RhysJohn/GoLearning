@@ -15,43 +15,6 @@ import (
 	"strconv"
 )
 
-// First attempt.
-// func SumOfSquares(n uint64) uint64 {
-// 	fmt.Println("n is " + strconv.Itoa(int(n)));
-// 	if n < 4 {
-// 		/* Because we are lower than 2 squared whatever value n holds this
-// 		   is the amount of 1 squared are going to be added to the list.
-// 		*/
-// 		return n;
-// 	}
-
-// 	// Go through from [1,2] squared to see if the sum of these are above n
-// 	var index uint64;
-// 	index = 1;
-// 	var result uint64;
-// 	result = 0;
-// 	for {
-// 		// fmt.Println("Index is " + strconv.i(index));
-
-// 		var squaresSum = findSquaresSum(index, index + 1);
-// 		fmt.Println("Checking n against sum of squares " + strconv.Itoa(int(squaresSum)));
-
-// 		if squaresSum >= n {
-// 			var remainder = n - (index + 1) * (index + 1);
-// 			fmt.Println("Remainder = " + strconv.Itoa(int(remainder)));
-// 			result++;
-// 			result += SumOfSquares(remainder);
-// 			break;
-// 		} else {
-// 			index++;
-// 		}
-// 	}
-
-// 	fmt.Println("Result = " + strconv.Itoa(int(result)));
-
-// 	return result;
-// }
-
 type keyPairValue struct {
 	key uint64
 	value uint64
@@ -62,8 +25,7 @@ type solution struct {
 	perfectSquares []uint64
 }
 
-// Second Attempt.
-func SumOfSquares(n uint64) int {
+func SumOfSquares(n uint64) uint64 {
 	// Declare an array and store all the possible squares which fit into n.
 	var squareValuesWhichFit []keyPairValue; 
 
@@ -81,6 +43,7 @@ func SumOfSquares(n uint64) int {
 			fmt.Println("Possible value: [" + strconv.Itoa(int(possibleValue.key)) + ", " +  strconv.Itoa(int(possibleValue.value)) + "]");
 
 			squareValuesWhichFit = append(squareValuesWhichFit, possibleValue);
+			index++;
 			continue;
 		} else {
 			// Square of the index > n, therefore we have all possible values. 
@@ -89,14 +52,16 @@ func SumOfSquares(n uint64) int {
 	}
 
 	// Based on length of squareValuesWhichFit, we find the minimun per length and then reduce
-	var length = len(squareValuesWhichFit);
+	var length = len(squareValuesWhichFit) - 1;
 	for i := length; i > 0; i-- {		
 		var possibleValues []uint64;
-		for j := 0; j < i; j++ {
-			possibleValues = append(possibleValues, squareValuesWhichFit[i].value);
+		for j := 0; j <= i; j++ {
+			possibleValues = append(possibleValues, squareValuesWhichFit[j].value);
 		}
 		
+		// Length solution is an array of squares.
 		var lengthSolution = findSolution(n, possibleValues);
+		// Grouped values for the value.
 		lengthAnswer := solution {
 			length: uint64(i),
 			perfectSquares: lengthSolution,
@@ -107,35 +72,35 @@ func SumOfSquares(n uint64) int {
 
 	
 	// Find the element with the smallest length in answers.
-	return len(answers);
+	fmt.Println(answers);
+	answer := 0;
+	for i, a := range answers {
+		l := len(a.perfectSquares);
+		if answer > l {
+			answer = l;
+		} else if  i == 0  {
+			answer = l;
+		}
+	}
+	return uint64(answer);
 }
 
 func findSolution(n uint64, valuesToPlayWith []uint64) []uint64 {
-	var solution []uint64;
-	for i := len(valuesToPlayWith); i > 0; i++ {
+	// Add some optimisation here.
+	if n == 0 {
+		return []uint64{};
+	}
+
+	solution := []uint64{};
+	for i := len(valuesToPlayWith) - 1; i >= 0; i-- {
 		var element uint64 = valuesToPlayWith[i];
-		if n > element {
-						
+		if n >= element {
+			solution = append(solution, element);
+			newValue := n - element;
+			result := findSolution(newValue, valuesToPlayWith);
+			return append(solution, result...);
 		}
 	}
 
-	if squaresSum >= n {
-		var remainder = n - (index + 1) * (index + 1);
-		fmt.Println("Remainder = " + strconv.Itoa(int(remainder)));
-		result++;
-		result += SumOfSquares(remainder);
-		break;
-	} else {
-		index++;
-	}
-}
-
-func findSquaresSum(a uint64, b uint64) uint64 {
-	var aSqaured = a * b;
-	var bSquared = b * b;
-
-	var sum = aSqaured + bSquared;
-	fmt.Println(sum)
-
-	return sum;
+	return solution;
 }

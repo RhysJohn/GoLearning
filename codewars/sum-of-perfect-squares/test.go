@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"codewars/sumofperfectsquares"
 )
 
 func main() {
-    // Get a greeting message and print it.
-    list := sumofperfectsquares.SumOfSquares(15);
-    fmt.Println(list)
+    tests := []uint64 { 15, 18, 19, 99, 661915703 };
+    for _, test := range tests {
+        list := sumofperfectsquares.SumOfSquares(test);
+        fmt.Println( "For number: " + strconv.Itoa(int(test)) + " Answer: " + strconv.Itoa(int(list))) 
+    }
 }
